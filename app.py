@@ -19,7 +19,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================
-# 2. UI 레이아웃 및 입력 (초기값 0 및 가이드 추가)
+# 2. UI 레이아웃 및 입력 (영문 도움말 적용)
 # =============================================================
 st.markdown("#### 1. Sample & Polymer Settings")
 col1, col2 = st.columns([2, 1])
@@ -28,48 +28,48 @@ with col1:
 with col2:
     st.write("") 
     st.write("")
-    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="구조 반복 마디(n)의 추정 범위를 그림에 표기합니다.")
+    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="Displays the estimated repeating unit range (n) on the structural diagram.")
 
 col3, col4, col5, col6 = st.columns(4)
 with col3:
     dp_mode = st.selectbox(
         "DP Mode:", 
         options=["Calculate from Mw", "Direct DP Input"],
-        help="[Calculate from Mw]: 분자량(kDa)으로부터 중합도(DP)를 자동 환산합니다.\n[Direct DP Input]: 사용자가 목표 DP를 직접 지정합니다."
+        help="[Calculate from Mw]: Automatically converts average molecular weight (kDa) to degree of polymerization (DP).\n[Direct DP Input]: Allows user to define a custom target DP directly."
     )
 with col4:
-    target_dp = st.number_input("Target DP:", value=300, step=10, help="직접 입력 모드일 때 적용될 글루코스 중합도(Degree of Polymerization)입니다.")
+    target_dp = st.number_input("Target DP:", value=300, step=10, help="Target degree of polymerization (DP) for the glucan chain.")
 with col5:
-    mw_val = st.number_input("Mw (kDa):", value=500.0, step=10.0, help="GPC 등으로 측정한 고분자의 평균 분자량(kDa)을 입력하세요.")
+    mw_val = st.number_input("Mw (kDa):", value=500.0, step=10.0, help="Average molecular weight (kDa) measured by GPC or SEC.")
 with col6:
-    display_glc = st.number_input("Display Glc (ea):", value=18, step=1, min_value=5, max_value=50, help="화면(도화지)에 시각적으로 그려낼 주쇄 포도당의 개수입니다.")
+    display_glc = st.number_input("Display Glc (ea):", value=18, step=1, min_value=5, max_value=50, help="Number of backbone glucose units to display on the rendering canvas.")
 
 st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 st.markdown("#### 2. Linkage Stoichiometry (%)")
 
-# 좌우 분할 패널 (초기값 모두 0.0)
+# 좌우 분할 패널 (초기값 0.0)
 left_col, right_col = st.columns(2)
 
 with left_col:
     st.markdown("**[ Linear & Terminal ]**")
     l_c1, l_c2 = st.columns(2)
     with l_c1:
-        t_g = st.number_input("t-Glc (%):", value=0.0, step=0.1, help="말단기(Terminal glucose) 비율")
-        g13 = st.number_input("1,3-Glc (%):", value=0.0, step=0.1, help="1,3-linked backbone ratio")
-        g16 = st.number_input("1,6-Glc (%):", value=0.0, step=0.1, help="1,6-linked backbone ratio")
+        t_g = st.number_input("t-Glc (%):", value=0.0, step=0.1, help="Percentage of terminal glucose units (non-reducing ends)")
+        g13 = st.number_input("1,3-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,3-linked backbone units")
+        g16 = st.number_input("1,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,6-linked backbone units")
     with l_c2:
-        g12 = st.number_input("1,2-Glc (%):", value=0.0, step=0.1, help="1,2-linked backbone ratio")
-        g14 = st.number_input("1,4-Glc (%):", value=0.0, step=0.1, help="1,4-linked backbone ratio")
+        g12 = st.number_input("1,2-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,2-linked backbone units")
+        g14 = st.number_input("1,4-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,4-linked backbone units")
 
 with right_col:
     st.markdown("**[ Branching Points ]**")
     r_c1, r_c2 = st.columns(2)
     with r_c1:
-        g26 = st.number_input("2,6-Glc (%):", value=0.0, step=0.1, help="2,6-branched point ratio")
-        g46 = st.number_input("4,6-Glc (%):", value=0.0, step=0.1, help="4,6-branched point ratio")
+        g26 = st.number_input("2,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 2,6-di-O-substituted branching points")
+        g46 = st.number_input("4,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 4,6-di-O-substituted branching points")
     with r_c2:
-        g36 = st.number_input("3,6-Glc (%):", value=0.0, step=0.1, help="3,6-branched point ratio")
-        g236 = st.number_input("2,3,6-Glc (%):", value=0.0, step=0.1, help="2,3,6-branched point ratio")
+        g36 = st.number_input("3,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 3,6-di-O-substituted branching points")
+        g236 = st.number_input("2,3,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 2,3,6-tri-O-substituted branching points")
 
 # =============================================================
 # 3. 렌더링 엔진 코어 로직 (동결본)
