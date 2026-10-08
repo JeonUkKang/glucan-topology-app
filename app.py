@@ -7,7 +7,7 @@ import io
 # =============================================================
 # 1. 페이지 설정 및 헤더
 # =============================================================
-st.set_page_config(page_title="Universal Homoglucan Topology Resolver", layout="wide")
+st.set_page_config(page_title="Advanced Glucan Topology Visualizer", layout="wide")
 
 st.markdown("""
     <h2 style='color:#0B3C5D; border-bottom: 2px solid #0B3C5D; padding-bottom: 5px; margin-bottom: 10px;'>
@@ -19,53 +19,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================
-# 2. UI 레이아웃 및 입력 (Streamlit 방식)
+# 2. UI 레이아웃 및 입력 (초기값 0 및 가이드 추가)
 # =============================================================
 st.markdown("#### 1. Sample & Polymer Settings")
 col1, col2 = st.columns([2, 1])
 with col1:
-    sample_name = st.text_input("Sample Name:", value="Mixed Glucan (1:1:1)")
+    sample_name = st.text_input("Sample Name:", value="", placeholder="e.g., Mutan, Dextran, Pullulan")
 with col2:
-    st.write("") # 간격 맞추기
+    st.write("") 
     st.write("")
-    show_bracket = st.checkbox("Show Brackets (n)", value=True)
+    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="구조 반복 마디(n)의 추정 범위를 그림에 표기합니다.")
 
 col3, col4, col5, col6 = st.columns(4)
 with col3:
-    dp_mode = st.selectbox("DP Mode:", options=["Calculate from Mw", "Direct DP Input"])
+    dp_mode = st.selectbox(
+        "DP Mode:", 
+        options=["Calculate from Mw", "Direct DP Input"],
+        help="[Calculate from Mw]: 분자량(kDa)으로부터 중합도(DP)를 자동 환산합니다.\n[Direct DP Input]: 사용자가 목표 DP를 직접 지정합니다."
+    )
 with col4:
-    target_dp = st.number_input("Target DP:", value=300, step=10)
+    target_dp = st.number_input("Target DP:", value=300, step=10, help="직접 입력 모드일 때 적용될 글루코스 중합도(Degree of Polymerization)입니다.")
 with col5:
-    mw_val = st.number_input("Mw (kDa):", value=500.0, step=10.0)
+    mw_val = st.number_input("Mw (kDa):", value=500.0, step=10.0, help="GPC 등으로 측정한 고분자의 평균 분자량(kDa)을 입력하세요.")
 with col6:
-    display_glc = st.number_input("Display Glc (ea):", value=18, step=1, min_value=5, max_value=50)
+    display_glc = st.number_input("Display Glc (ea):", value=18, step=1, min_value=5, max_value=50, help="화면(도화지)에 시각적으로 그려낼 주쇄 포도당의 개수입니다.")
 
 st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 st.markdown("#### 2. Linkage Stoichiometry (%)")
 
-# 좌우 분할 패널
+# 좌우 분할 패널 (초기값 모두 0.0)
 left_col, right_col = st.columns(2)
 
 with left_col:
     st.markdown("**[ Linear & Terminal ]**")
     l_c1, l_c2 = st.columns(2)
     with l_c1:
-        t_g = st.number_input("t-Glc (%):", value=1.1, step=0.1)
-        g13 = st.number_input("1,3-Glc (%):", value=33.3, step=0.1)
-        g16 = st.number_input("1,6-Glc (%):", value=0.0, step=0.1)
+        t_g = st.number_input("t-Glc (%):", value=0.0, step=0.1, help="말단기(Terminal glucose) 비율")
+        g13 = st.number_input("1,3-Glc (%):", value=0.0, step=0.1, help="1,3-linked backbone ratio")
+        g16 = st.number_input("1,6-Glc (%):", value=0.0, step=0.1, help="1,6-linked backbone ratio")
     with l_c2:
-        g12 = st.number_input("1,2-Glc (%):", value=33.4, step=0.1)
-        g14 = st.number_input("1,4-Glc (%):", value=33.3, step=0.1)
+        g12 = st.number_input("1,2-Glc (%):", value=0.0, step=0.1, help="1,2-linked backbone ratio")
+        g14 = st.number_input("1,4-Glc (%):", value=0.0, step=0.1, help="1,4-linked backbone ratio")
 
 with right_col:
     st.markdown("**[ Branching Points ]**")
     r_c1, r_c2 = st.columns(2)
     with r_c1:
-        g26 = st.number_input("2,6-Glc (%):", value=0.0, step=0.1)
-        g46 = st.number_input("4,6-Glc (%):", value=3.0, step=0.1)
+        g26 = st.number_input("2,6-Glc (%):", value=0.0, step=0.1, help="2,6-branched point ratio")
+        g46 = st.number_input("4,6-Glc (%):", value=0.0, step=0.1, help="4,6-branched point ratio")
     with r_c2:
-        g36 = st.number_input("3,6-Glc (%):", value=0.0, step=0.1)
-        g236 = st.number_input("2,3,6-Glc (%):", value=0.0, step=0.1)
+        g36 = st.number_input("3,6-Glc (%):", value=0.0, step=0.1, help="3,6-branched point ratio")
+        g236 = st.number_input("2,3,6-Glc (%):", value=0.0, step=0.1, help="2,3,6-branched point ratio")
 
 # =============================================================
 # 3. 렌더링 엔진 코어 로직 (동결본)
@@ -196,9 +200,12 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
 
     def get_vec(l_type, tier=0):
         if primary_link in ["1,4", "1,3", "1,2"]: 
-            if tier == 0: return np.array([1.0, -1.2]) if l_type == "1,6" else np.array([1.4, 0.0]) 
-            elif tier == 1: return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
-            elif tier == 2: return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
+            if tier == 0: 
+                return np.array([1.0, -1.2]) if l_type == "1,6" else np.array([1.4, 0.0]) 
+            elif tier == 1: 
+                return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
+            elif tier == 2: 
+                return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
         else: 
             if tier == 0: return np.array([1.0, 1.0]) if l_type == "1,6" else np.array([1.4, 0.0])
             elif tier == 1: return np.array([0.0, 1.4]) if l_type == "1,6" else np.array([-1.0, 1.0]) 
@@ -327,7 +334,7 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
             rep_n_high = max(1, int(np.round((rep_dp * (primary_pct / 100.0)) / (num_bb * 0.65))))
             ax.text(label_pos[0], label_pos[1], f"$n \\approx {rep_n_low}-{rep_n_high}$", fontsize=9, fontweight='bold', ha='left', va='center')
 
-    plt.suptitle(f"Topological Spectrum for {sample_name} (DP = {rep_dp})", fontsize=16, fontweight='bold', y=0.98, color='#0B3C5D')
+    plt.suptitle(f"Topological Spectrum for {sample_name if sample_name else 'Unnamed Glucan'} (DP = {rep_dp})", fontsize=16, fontweight='bold', y=0.98, color='#0B3C5D')
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
     return fig
@@ -358,7 +365,7 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.markdown("### 📋 Topological Structural Report")
         colA, colB = st.columns(2)
         with colA:
-            st.write(f"**Sample Name:** {sample_name}")
+            st.write(f"**Sample Name:** {sample_name if sample_name else 'Unnamed Glucan'}")
             st.write(f"**Target DP (Mw):** {rep_dp} ({mw_val} kDa)")
             st.write(f"**Stoichiometry Sum:** {total_sum:.1f}%")
             st.write(f"**Linear Backbone(s):** {eval_data['backbone_str']}")
@@ -372,7 +379,8 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.markdown("---")
 
     # 렌더링 및 출력
-    fig = render_stoichiometric_models(sample_name, rep_dp, show_bracket, display_glc, t_g, g16, g13, g14, g12, g36, g46, g26, g236)
+    s_name = sample_name if sample_name else "Unnamed_Glucan"
+    fig = render_stoichiometric_models(s_name, rep_dp, show_bracket, display_glc, t_g, g16, g13, g14, g12, g36, g46, g26, g236)
     st.pyplot(fig)
 
     # 고해상도 파일 다운로드 (BytesIO)
@@ -390,7 +398,7 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.download_button(
             label="📥 Download as PNG (300dpi)",
             data=png_buffer,
-            file_name=f"{sample_name.replace(' ', '_')}_topology.png",
+            file_name=f"{s_name.replace(' ', '_')}_topology.png",
             mime="image/png",
             use_container_width=True
         )
@@ -398,8 +406,8 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.download_button(
             label="📥 Download as PDF (Vector)",
             data=pdf_buffer,
-            file_name=f"{sample_name.replace(' ', '_')}_topology.pdf",
+            file_name=f"{s_name.replace(' ', '_')}_topology.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-    plt.close(fig) # 메모리 누수 방지
+    plt.close(fig)
