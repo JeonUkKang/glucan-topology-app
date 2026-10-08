@@ -112,17 +112,22 @@ with col1:
 with col2:
     st.write("") 
     st.write("")
-    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="Displays the estimated repeating unit range (n).")
+    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="Displays the estimated repeating unit range (n) on the structural diagram.")
 
 col3, col4, col5, col6 = st.columns(4)
 with col3:
-    st.selectbox("DP Mode:", options=["Calculate from Mw", "Direct DP Input"], key="dp_mode")
+    st.selectbox(
+        "DP Mode:", 
+        options=["Calculate from Mw", "Direct DP Input"], 
+        key="dp_mode",
+        help="[Calculate from Mw]: Automatically converts average molecular weight (kDa) to degree of polymerization (DP).\n[Direct DP Input]: Allows user to define a custom target DP directly."
+    )
 with col4:
-    st.number_input("Target DP:", step=10, key="tgt_dp")
+    st.number_input("Target DP:", step=10, key="tgt_dp", help="Target degree of polymerization (DP) for the glucan chain.")
 with col5:
-    st.number_input("Mw (kDa):", step=10.0, key="mw_val")
+    st.number_input("Mw (kDa):", step=10.0, key="mw_val", help="Average molecular weight (kDa) measured by GPC or SEC.")
 with col6:
-    st.number_input("Display Glc (ea):", min_value=5, max_value=50, step=1, key="disp_glc", help="Will automatically scale down for DP <= 20.")
+    st.number_input("Display Glc (ea):", min_value=5, max_value=50, step=1, key="disp_glc", help="Number of backbone glucose units to display on the rendering canvas. Will automatically scale down for DP <= 20.")
 
 st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 st.markdown("#### 2. Linkage Stoichiometry (%)")
@@ -132,22 +137,22 @@ with left_col:
     st.markdown("**[ Linear & Terminal ]**")
     l_c1, l_c2 = st.columns(2)
     with l_c1:
-        st.number_input("t-Glc (%):", step=0.1, key="t_glc")
-        st.number_input("1,3-Glc (%):", step=0.1, key="g13")
-        st.number_input("1,6-Glc (%):", step=0.1, key="g16")
+        st.number_input("t-Glc (%):", step=0.1, key="t_glc", help="Percentage of terminal glucose units (non-reducing ends)")
+        st.number_input("1,3-Glc (%):", step=0.1, key="g13", help="Percentage of 1,3-linked backbone units")
+        st.number_input("1,6-Glc (%):", step=0.1, key="g16", help="Percentage of 1,6-linked backbone units")
     with l_c2:
-        st.number_input("1,2-Glc (%):", step=0.1, key="g12")
-        st.number_input("1,4-Glc (%):", step=0.1, key="g14")
+        st.number_input("1,2-Glc (%):", step=0.1, key="g12", help="Percentage of 1,2-linked backbone units")
+        st.number_input("1,4-Glc (%):", step=0.1, key="g14", help="Percentage of 1,4-linked backbone units")
 
 with right_col:
     st.markdown("**[ Branching Points ]**")
     r_c1, r_c2 = st.columns(2)
     with r_c1:
-        st.number_input("2,6-Glc (%):", step=0.1, key="g26")
-        st.number_input("4,6-Glc (%):", step=0.1, key="g46")
+        st.number_input("2,6-Glc (%):", step=0.1, key="g26", help="Percentage of 2,6-di-O-substituted branching points")
+        st.number_input("4,6-Glc (%):", step=0.1, key="g46", help="Percentage of 4,6-di-O-substituted branching points")
     with r_c2:
-        st.number_input("3,6-Glc (%):", step=0.1, key="g36")
-        st.number_input("2,3,6-Glc (%):", step=0.1, key="g236")
+        st.number_input("3,6-Glc (%):", step=0.1, key="g36", help="Percentage of 3,6-di-O-substituted branching points")
+        st.number_input("2,3,6-Glc (%):", step=0.1, key="g236", help="Percentage of 2,3,6-tri-O-substituted branching points")
 
 # =============================================================
 # 4. 렌더링 엔진 코어 로직
