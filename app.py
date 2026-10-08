@@ -19,60 +19,138 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================
-# 2. UI 레이아웃 및 입력 (영문 도움말 적용)
+# 2. 프리셋(Preset) 데이터 및 세션 상태(Session State) 동기화 로직
+# =============================================================
+PRESETS = {
+    "[Low DP] Maltotriose": {"mode": "Direct DP Input", "dp": 3, "1,4": 66.7, "t": 33.3},
+    "[Low DP] Isomaltotriose": {"mode": "Direct DP Input", "dp": 3, "1,6": 66.7, "t": 33.3},
+    "[Low DP] Panose": {"mode": "Direct DP Input", "dp": 3, "1,4": 33.3, "1,6": 33.3, "t": 33.4},
+    "[Low DP] Isopanose": {"mode": "Direct DP Input", "dp": 3, "1,4": 33.3, "1,6": 33.3, "t": 33.4},
+    "[Low DP] Maltotetraose": {"mode": "Direct DP Input", "dp": 4, "1,4": 75.0, "t": 25.0},
+    "[Low DP] DP10-Maltooligosaccharide": {"mode": "Direct DP Input", "dp": 10, "1,4": 90.0, "t": 10.0},
+    "[Low DP] DP15-Maltooligosaccharide": {"mode": "Direct DP Input", "dp": 15, "1,4": 93.3, "t": 6.7},
+    "[Polymer] High α-(1,2,6) branched Dextran": {"mode": "Calculate from Mw", "mw": 101000.0, "1,6": 34.5, "2,6": 32.4, "t": 33.1},
+    "[Polymer] Complex Branched Dextran": {"mode": "Calculate from Mw", "mw": 5470.0, "1,6": 49.8, "1,3": 2.8, "1,4": 0.7, "3,6": 17.6, "2,6": 1.4, "t": 27.7},
+    "[Polymer] Alternan": {"mode": "Direct DP Input", "dp": 300, "1,6": 45.1, "1,3": 35.3, "3,6": 9.8, "t": 9.8},
+    "[Polymer] Reuteran": {"mode": "Direct DP Input", "dp": 300, "1,4": 45.0, "1,6": 27.0, "4,6": 15.0, "t": 13.0},
+    "[Polymer] Mutan": {"mode": "Direct DP Input", "dp": 300, "1,3": 66.7, "1,6": 10.5, "3,6": 11.4, "t": 11.4},
+    "[Polymer] Amylopectin": {"mode": "Calculate from Mw", "mw": 100000.0, "1,4": 95.8, "4,6": 4.2, "t": 4.2},
+    "[Polymer] Glycogen": {"mode": "Calculate from Mw", "mw": 2270.0, "1,4": 80.7, "4,6": 12.4, "t": 1.1},
+    "[Polymer] Pullulan": {"mode": "Calculate from Mw", "mw": 350.0, "1,4": 66.7, "1,6": 33.3}
+}
+
+preset_options = [
+    "Custom (Manual Input)",
+    "-------------------------",
+    "[Low DP] Maltotriose",
+    "[Low DP] Isomaltotriose",
+    "[Low DP] Panose",
+    "[Low DP] Isopanose",
+    "[Low DP] Maltotetraose",
+    "[Low DP] DP10-Maltooligosaccharide",
+    "[Low DP] DP15-Maltooligosaccharide",
+    "-------------------------",
+    "[Polymer] High α-(1,2,6) branched Dextran",
+    "[Polymer] Complex Branched Dextran",
+    "[Polymer] Alternan",
+    "[Polymer] Reuteran",
+    "[Polymer] Mutan",
+    "[Polymer] Amylopectin",
+    "[Polymer] Glycogen",
+    "[Polymer] Pullulan"
+]
+
+# 초기 변수 세팅
+default_keys = {
+    "sn": "", "dp_mode": "Direct DP Input", "tgt_dp": 300, "mw_val": 500.0, "disp_glc": 18,
+    "t_glc": 0.0, "g12": 0.0, "g13": 0.0, "g14": 0.0, "g16": 0.0, 
+    "g26": 0.0, "g36": 0.0, "g46": 0.0, "g236": 0.0
+}
+for k, v in default_keys.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
+def load_preset():
+    sel = st.session_state.preset_selector
+    if sel in PRESETS:
+        p = PRESETS[sel]
+        st.session_state.sn = sel.split("] ")[-1]
+        st.session_state.dp_mode = p.get("mode", "Direct DP Input")
+        st.session_state.tgt_dp = int(p.get("dp", 300))
+        st.session_state.mw_val = float(p.get("mw", 500.0))
+        st.session_state.t_glc = float(p.get("t", 0.0))
+        st.session_state.g12 = float(p.get("1,2", 0.0))
+        st.session_state.g13 = float(p.get("1,3", 0.0))
+        st.session_state.g14 = float(p.get("1,4", 0.0))
+        st.session_state.g16 = float(p.get("1,6", 0.0))
+        st.session_state.g26 = float(p.get("2,6", 0.0))
+        st.session_state.g36 = float(p.get("3,6", 0.0))
+        st.session_state.g46 = float(p.get("4,6", 0.0))
+        st.session_state.g236 = float(p.get("2,3,6", 0.0))
+    elif sel == "Custom (Manual Input)":
+        st.session_state.sn = ""
+        st.session_state.t_glc = 0.0
+        st.session_state.g12 = 0.0
+        st.session_state.g13 = 0.0
+        st.session_state.g14 = 0.0
+        st.session_state.g16 = 0.0
+        st.session_state.g26 = 0.0
+        st.session_state.g36 = 0.0
+        st.session_state.g46 = 0.0
+        st.session_state.g236 = 0.0
+
+# =============================================================
+# 3. UI 레이아웃 및 입력
 # =============================================================
 st.markdown("#### 1. Sample & Polymer Settings")
+
+st.selectbox("📚 Load Preset:", options=preset_options, key="preset_selector", on_change=load_preset)
+
 col1, col2 = st.columns([2, 1])
 with col1:
-    sample_name = st.text_input("Sample Name:", value="", placeholder="e.g., Mutan, Dextran, Pullulan")
+    st.text_input("Sample Name:", key="sn", placeholder="e.g., Maltotriose, Panose, Mutan")
 with col2:
     st.write("") 
     st.write("")
-    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="Displays the estimated repeating unit range (n) on the structural diagram.")
+    show_bracket = st.checkbox("Show Brackets (n)", value=True, help="Displays the estimated repeating unit range (n).")
 
 col3, col4, col5, col6 = st.columns(4)
 with col3:
-    dp_mode = st.selectbox(
-        "DP Mode:", 
-        options=["Calculate from Mw", "Direct DP Input"],
-        help="[Calculate from Mw]: Automatically converts average molecular weight (kDa) to degree of polymerization (DP).\n[Direct DP Input]: Allows user to define a custom target DP directly."
-    )
+    st.selectbox("DP Mode:", options=["Calculate from Mw", "Direct DP Input"], key="dp_mode")
 with col4:
-    target_dp = st.number_input("Target DP:", value=300, step=10, help="Target degree of polymerization (DP) for the glucan chain.")
+    st.number_input("Target DP:", step=10, key="tgt_dp")
 with col5:
-    mw_val = st.number_input("Mw (kDa):", value=500.0, step=10.0, help="Average molecular weight (kDa) measured by GPC or SEC.")
+    st.number_input("Mw (kDa):", step=10.0, key="mw_val")
 with col6:
-    display_glc = st.number_input("Display Glc (ea):", value=18, step=1, min_value=5, max_value=50, help="Number of backbone glucose units to display on the rendering canvas.")
+    st.number_input("Display Glc (ea):", min_value=5, max_value=50, step=1, key="disp_glc", help="Will automatically scale down for DP <= 20.")
 
 st.markdown("<hr style='margin: 10px 0px;'>", unsafe_allow_html=True)
 st.markdown("#### 2. Linkage Stoichiometry (%)")
 
-# 좌우 분할 패널 (초기값 0.0)
 left_col, right_col = st.columns(2)
-
 with left_col:
     st.markdown("**[ Linear & Terminal ]**")
     l_c1, l_c2 = st.columns(2)
     with l_c1:
-        t_g = st.number_input("t-Glc (%):", value=0.0, step=0.1, help="Percentage of terminal glucose units (non-reducing ends)")
-        g13 = st.number_input("1,3-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,3-linked backbone units")
-        g16 = st.number_input("1,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,6-linked backbone units")
+        st.number_input("t-Glc (%):", step=0.1, key="t_glc")
+        st.number_input("1,3-Glc (%):", step=0.1, key="g13")
+        st.number_input("1,6-Glc (%):", step=0.1, key="g16")
     with l_c2:
-        g12 = st.number_input("1,2-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,2-linked backbone units")
-        g14 = st.number_input("1,4-Glc (%):", value=0.0, step=0.1, help="Percentage of 1,4-linked backbone units")
+        st.number_input("1,2-Glc (%):", step=0.1, key="g12")
+        st.number_input("1,4-Glc (%):", step=0.1, key="g14")
 
 with right_col:
     st.markdown("**[ Branching Points ]**")
     r_c1, r_c2 = st.columns(2)
     with r_c1:
-        g26 = st.number_input("2,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 2,6-di-O-substituted branching points")
-        g46 = st.number_input("4,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 4,6-di-O-substituted branching points")
+        st.number_input("2,6-Glc (%):", step=0.1, key="g26")
+        st.number_input("4,6-Glc (%):", step=0.1, key="g46")
     with r_c2:
-        g36 = st.number_input("3,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 3,6-di-O-substituted branching points")
-        g236 = st.number_input("2,3,6-Glc (%):", value=0.0, step=0.1, help="Percentage of 2,3,6-tri-O-substituted branching points")
+        st.number_input("3,6-Glc (%):", step=0.1, key="g36")
+        st.number_input("2,3,6-Glc (%):", step=0.1, key="g236")
 
 # =============================================================
-# 3. 렌더링 엔진 코어 로직 (동결본)
+# 4. 렌더링 엔진 코어 로직
 # =============================================================
 def draw_bracket(ax, p_start, p_end, normal_vec, length=0.85, lw=1.8, color='black'):
     v_norm = normal_vec / np.linalg.norm(normal_vec)
@@ -103,14 +181,12 @@ def extract_topology_data(t_g, g16, g13, g14, g12, g36, g46, g26, g236):
     linear_dict = {"1,4": g14, "1,6": g16, "1,3": g13, "1,2": g12}
     linear_sorted = sorted([(k, v) for k, v in linear_dict.items() if v > 0], key=lambda x: x[1], reverse=True)
     branch_ratio = g36 + g46 + g26 + (g236 * 2)
-    
     if not linear_sorted:
         backbone_str = "1,4-Glc (100.0%)"
         primary_link = "1,4"
     else:
         backbone_str = " + ".join([f"{k}-Glc ({v:.1f}%)" for k, v in linear_sorted])
         primary_link = linear_sorted[0][0]
-        
     return {"primary_link": primary_link, "backbone_str": backbone_str, "db": branch_ratio}
 
 def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g, g16, g13, g14, g12, g36, g46, g26, g236):
@@ -134,7 +210,7 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
     total_linear_pct = sum([v for k, v in linear_sorted])
     base_len = 5 if primary_pct > 85.0 else (4 if primary_pct > 60.0 else 3)
     avg_chain_len = 100.0 / max(0.1, t_g) if t_g > 0 else 100.0
-    use_dashed_extension = avg_chain_len > (base_len + 1)
+    use_dashed_extension = avg_chain_len > (base_len + 1) and rep_dp > 20
 
     alt_links = [primary_link] * total_bonds
     if len(linear_sorted) > 1:
@@ -188,10 +264,10 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
     branch_specs = []
     for k_i, b_idx in enumerate(b_indices):
         root_link = branch_bond 
-        side_len = base_len if k_i % 2 == 0 else max(1, base_len - 1)
+        side_len = min(base_len, max(1, rep_dp - 2)) if rep_dp <= 20 else base_len
         side_links = [primary_link] * (side_len - 1) 
         sub_links = []
-        if k_i % 2 == 0 and len(side_links) >= 1:
+        if k_i % 2 == 0 and len(side_links) >= 1 and rep_dp > 10:
             sub_root = branch_bond   
             sub_next = primary_link  
             sub_len = max(1, side_len - 2)
@@ -200,12 +276,9 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
 
     def get_vec(l_type, tier=0):
         if primary_link in ["1,4", "1,3", "1,2"]: 
-            if tier == 0: 
-                return np.array([1.0, -1.2]) if l_type == "1,6" else np.array([1.4, 0.0]) 
-            elif tier == 1: 
-                return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
-            elif tier == 2: 
-                return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
+            if tier == 0: return np.array([1.0, -1.2]) if l_type == "1,6" else np.array([1.4, 0.0]) 
+            elif tier == 1: return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
+            elif tier == 2: return np.array([1.4, 0.0]) if l_type == primary_link else np.array([1.0, 1.2]) 
         else: 
             if tier == 0: return np.array([1.0, 1.0]) if l_type == "1,6" else np.array([1.4, 0.0])
             elif tier == 1: return np.array([0.0, 1.4]) if l_type == "1,6" else np.array([-1.0, 1.0]) 
@@ -235,16 +308,19 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
             ax.plot([bb_coords[i,0], bb_coords[i+1,0]], [bb_coords[i,1], bb_coords[i+1,1]], color='black', lw=2.2, zorder=1)
             put_text(ax, bb_coords[i], bb_coords[i+1], alt_links[i])
 
-        start_v, end_v = get_vec(alt_links[0], tier=0) * 0.8, get_vec(alt_links[-1], tier=0) * 0.8
-        ax.plot([bb_coords[0,0] - start_v[0], bb_coords[0,0]], [bb_coords[0,1] - start_v[1], bb_coords[0,1]], color='#333333', lw=2.2, linestyle='--', dashes=(2.0, 1.2), zorder=1)
-        ax.plot([bb_coords[-1,0], bb_coords[-1,0] + end_v[0]], [bb_coords[-1,1], bb_coords[-1,1] + end_v[1]], color='#333333', lw=2.2, linestyle='--', dashes=(2.0, 1.2), zorder=1)
-        all_coords.extend([bb_coords[0] - start_v, bb_coords[-1] + end_v])
+        if rep_dp > 20:
+            start_v, end_v = get_vec(alt_links[0], tier=0) * 0.8, get_vec(alt_links[-1], tier=0) * 0.8
+            ax.plot([bb_coords[0,0] - start_v[0], bb_coords[0,0]], [bb_coords[0,1] - start_v[1], bb_coords[0,1]], color='#333333', lw=2.2, linestyle='--', dashes=(2.0, 1.2), zorder=1)
+            ax.plot([bb_coords[-1,0], bb_coords[-1,0] + end_v[0]], [bb_coords[-1,1], bb_coords[-1,1] + end_v[1]], color='#333333', lw=2.2, linestyle='--', dashes=(2.0, 1.2), zorder=1)
+            all_coords.extend([bb_coords[0] - start_v, bb_coords[-1] + end_v])
 
         bb_name = f"{primary_link}-Glc"
         for i, (bx, by) in enumerate(bb_coords):
             ax.add_patch(plt.Circle((bx, by), 0.32, facecolor='#1f77b4', edgecolor='black', lw=1.8, zorder=3))
-            if i in [0, num_bb - 1]: ax.text(bx, by - 0.45, f"{bb_name}\n{primary_pct:.1f}%", fontsize=7.0, ha='center', va='top')
-            elif i in b_indices: ax.text(bx, by - 0.45, f"{main_br_name}\n{branch_ratio:.1f}%", fontsize=6.5, ha='center', va='top')
+            if i in [0, num_bb - 1] and rep_dp > 20: 
+                ax.text(bx, by - 0.45, f"{bb_name}\n{primary_pct:.1f}%", fontsize=7.0, ha='center', va='top')
+            elif i in b_indices: 
+                ax.text(bx, by - 0.45, f"{main_br_name}\n{branch_ratio:.1f}%", fontsize=6.5, ha='center', va='top')
 
         for k_i, b_idx in enumerate(b_indices):
             px, py = bb_coords[b_idx]
@@ -279,7 +355,7 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
                 t1_text_pos = t1_coords[-1]
 
                 t2_text_pos = None
-                if spec['sub_links']:
+                if spec['sub_links'] and rep_dp > 10:
                     delay_idx = min(2, len(t1_coords) - 1)
                     t2_root_start = t1_coords[delay_idx] 
                     t2_start = t2_root_start + get_vec(spec['sub_links'][0], tier=2)
@@ -325,7 +401,7 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
         ax.set_xlim(min(all_x) - 2.5, max(all_x) + 3.0)
         ax.set_ylim(min(all_y) - 3.5, max(all_y) + 4.5)
 
-        if show_bracket and len(bb_coords) >= 4:
+        if show_bracket and len(bb_coords) >= 3 and rep_dp > 5:
             p_start, p_end = (bb_coords[1] + bb_coords[2]) / 2.0, (bb_coords[-2] + bb_coords[-3]) / 2.0
             n_vec_b = np.array([0, -1]) if primary_link in ["1,4", "1,3", "1,2"] else np.array([1, -1]) 
             draw_bracket(ax, p_start, p_end, n_vec_b, length=0.85, lw=1.8, color='black')
@@ -334,23 +410,31 @@ def render_stoichiometric_models(sample_name, rep_dp, show_bracket, num_bb, t_g,
             rep_n_high = max(1, int(np.round((rep_dp * (primary_pct / 100.0)) / (num_bb * 0.65))))
             ax.text(label_pos[0], label_pos[1], f"$n \\approx {rep_n_low}-{rep_n_high}$", fontsize=9, fontweight='bold', ha='left', va='center')
 
-    plt.suptitle(f"Topological Spectrum for {sample_name if sample_name else 'Unnamed Glucan'} (DP = {rep_dp})", fontsize=16, fontweight='bold', y=0.98, color='#0B3C5D')
+    plt.suptitle(f"Topological Spectrum for {sample_name if sample_name else 'Oligosaccharide'} (DP = {rep_dp})", fontsize=16, fontweight='bold', y=0.98, color='#0B3C5D')
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
     return fig
 
 # =============================================================
-# 4. 버튼 이벤트 (결과 출력 및 다운로드)
+# 5. 버튼 이벤트 및 출력
 # =============================================================
 st.markdown("<br>", unsafe_allow_html=True)
 if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
     
-    # DP 연산
-    if dp_mode == "Calculate from Mw":
-        rep_dp = int(np.round((mw_val * 1000.0) / 162.14))
+    # 세션 상태(Session State)에서 값 불러오기
+    rep_dp = int(np.round((st.session_state.mw_val * 1000.0) / 162.14)) if st.session_state.dp_mode == "Calculate from Mw" else int(st.session_state.tgt_dp)
+    if rep_dp < 1: rep_dp = 3
+
+    # 🚨 저분자(DP 3~20) 자동 적응 로직
+    if rep_dp <= 20:
+        num_bb = rep_dp
     else:
-        rep_dp = int(target_dp)
+        num_bb = int(st.session_state.disp_glc) if st.session_state.disp_glc > 0 else 18
     
+    t_g, g12, g13, g14, g16 = st.session_state.t_glc, st.session_state.g12, st.session_state.g13, st.session_state.g14, st.session_state.g16
+    g26, g36, g46, g236 = st.session_state.g26, st.session_state.g36, st.session_state.g46, st.session_state.g236
+    s_name = st.session_state.sn
+
     total_sum = t_g + g12 + g13 + g14 + g16 + g26 + g36 + g46 + g236
     eval_data = extract_topology_data(t_g, g16, g13, g14, g12, g36, g46, g26, g236)
     
@@ -365,8 +449,8 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.markdown("### 📋 Topological Structural Report")
         colA, colB = st.columns(2)
         with colA:
-            st.write(f"**Sample Name:** {sample_name if sample_name else 'Unnamed Glucan'}")
-            st.write(f"**Target DP (Mw):** {rep_dp} ({mw_val} kDa)")
+            st.write(f"**Sample Name:** {s_name if s_name else 'Oligosaccharide / Polymer'}")
+            st.write(f"**Target DP (Mw):** {rep_dp} ({st.session_state.mw_val} kDa)")
             st.write(f"**Stoichiometry Sum:** {total_sum:.1f}%")
             st.write(f"**Linear Backbone(s):** {eval_data['backbone_str']}")
         with colB:
@@ -379,13 +463,12 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.markdown("---")
 
     # 렌더링 및 출력
-    s_name = sample_name if sample_name else "Unnamed_Glucan"
-    fig = render_stoichiometric_models(s_name, rep_dp, show_bracket, display_glc, t_g, g16, g13, g14, g12, g36, g46, g26, g236)
+    fig = render_stoichiometric_models(s_name, rep_dp, show_bracket, num_bb, t_g, g16, g13, g14, g12, g36, g46, g26, g236)
     st.pyplot(fig)
 
-    # 고해상도 파일 다운로드 (BytesIO)
+    # 고해상도 파일 다운로드
     png_buffer = io.BytesIO()
-    fig.savefig(png_buffer, format='png', dpi=300, bbox_inches='tight')
+    fig.savefig(png_buffer, format='png', dpi=600, bbox_inches='tight')
     png_buffer.seek(0)
     
     pdf_buffer = io.BytesIO()
@@ -398,7 +481,7 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.download_button(
             label="📥 Download as PNG (300dpi)",
             data=png_buffer,
-            file_name=f"{s_name.replace(' ', '_')}_topology.png",
+            file_name=f"{s_name.replace(' ', '_') if s_name else 'topology'}.png",
             mime="image/png",
             use_container_width=True
         )
@@ -406,7 +489,7 @@ if st.button("🚀 Generate Theoretical Topologies", use_container_width=True):
         st.download_button(
             label="📥 Download as PDF (Vector)",
             data=pdf_buffer,
-            file_name=f"{s_name.replace(' ', '_')}_topology.pdf",
+            file_name=f"{s_name.replace(' ', '_') if s_name else 'topology'}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
